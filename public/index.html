@@ -11,26 +11,20 @@
 </head>
 <body>
   <main class="shell">
-    <header class="top">
-      <div class="mark" aria-hidden="true">N+</div>
-      <div><p class="eyebrow">STUDY • PRACTICE • UNDERSTAND</p><h1>NEET Practice Solver</h1></div>
-    </header>
-    <section class="intro">
-      <h2>Work through a question.</h2>
-      <p>Enter a NEET-style question to get a rule-based answer when supported, or a clear explanation of what information is missing.</p>
-    </section>
+    <header class="top"><div class="mark" aria-hidden="true">N+</div><div><p class="eyebrow">STUDY • PRACTICE • UNDERSTAND</p><h1>NEET Practice Solver</h1></div></header>
+    <section class="intro"><h2>Work through a question.</h2><p>Enter a NEET-style question for a limited rule-based solution. Unsupported questions receive a clear explanation of what is missing.</p></section>
     <form id="solve-form">
       <label for="question">Your question</label>
-      <textarea id="question" name="question" minlength="5" maxlength="8000" required placeholder="Example: Calculate motional emf for B = 2 tesla, length L = 1 m, speed v = 8 m/s." rows="7"></textarea>
-      <div class="controls"><span id="char-count">0 / 8000</span><button id="solve-button" type="submit">Solve question <span aria-hidden="true">→</span></button></div>
+      <textarea id="question" name="question" minlength="5" maxlength="8000" required placeholder="Example: Calculate motional emf for magnetic field B = 2 tesla, length L = 1 m, speed v = 8 m/s." rows="7"></textarea>
+      <label class="pace"><input id="paced-mode" type="checkbox" checked> Practice pacing: reveal the result after a random 25–45 second study interval</label>
+      <div class="controls"><span id="char-count">0 / 8000</span><button id="solve-button" type="submit">Start practice question <span aria-hidden="true">→</span></button></div>
       <p id="notice" class="notice" role="status" aria-live="polite">Practice only. Unsupported questions are not guessed.</p>
     </form>
     <section id="result" class="result" hidden aria-live="polite">
       <div class="result-head"><h2 id="result-title">Result</h2><span id="confidence" class="confidence"></span></div>
-      <p id="answer" class="answer"></p>
-      <h3>Explanation</h3><p id="explanation"></p>
+      <p id="answer" class="answer"></p><h3>Explanation</h3><p id="explanation"></p>
     </section>
-    <footer><p>No account, database, or question history. This tool does not interact with live exams or competition websites. Verify answers with your study material.</p></footer>
+    <footer><p>No account, database, or question history. This app only processes questions submitted here; it does not control other websites or manipulate scores. Motivational-video text/links are not treated as questions. Verify answers with study material.</p></footer>
   </main>
 </body>
 </html>
