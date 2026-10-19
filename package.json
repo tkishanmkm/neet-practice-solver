@@ -9,6 +9,7 @@
   },
   "scripts": {
     "start": "node server.js",
+    "trackprep:watch": "node scripts/trackprep-assist.mjs",
     "test": "node --test",
     "check": "node --check server.js && node --check solver.js && node --check public/app.js && node --check scripts/trackprep-assist.mjs"
   },

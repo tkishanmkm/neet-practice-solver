@@ -21,6 +21,7 @@ const profile = fileURLToPath(new URL('../.trackprep-profile/', import.meta.url)
 const context = await chromium.launchPersistentContext(profile, { headless: false });
 const page = context.pages()[0] || await context.newPage();
 const seen = new Set();
+let lastState = '';
 let stopped = false;
 
 function clean(text) {
@@ -36,36 +37,63 @@ try {
 
   while (!stopped) {
     if (page.isClosed()) break;
-    const cards = await page.evaluate(() => {
+    const scan = await page.evaluate(() => {
       const visible = el => {
         const r = el.getBoundingClientRect();
         const s = getComputedStyle(el);
         return r.width > 0 && r.height > 0 && s.display !== 'none' && s.visibility !== 'hidden';
       };
-      const nodes = Array.from(document.querySelectorAll('article, [role="article"], section, main div, main'))
+      const body = (document.body?.innerText || '').trim();
+      const raw = Array.from(document.querySelectorAll('article, [role="article"], section, main div, main, div'))
         .filter(visible)
-        .map(el => ({ el, text: (el.innerText || '').trim() }))
-        .filter(x => x.text.length >= 35 && x.text.length <= 1800)
-        .filter(x => {
-          const t = x.text;
-          const labels = (t.match(/(?:^|\n)\s*[A-D][.)]\s+/gm) || []).length;
-          return labels >= 2 || /\b(?:question|which|what|calculate|find|during|if the|the element|an organic compound)\b/i.test(t);
+        .map(el => ({ text: (el.innerText || '').trim() }))
+        .filter(x => x.text.length >= 35 && x.text.length <= 2200)
+        .map(x => {
+          const labels = (x.text.match(/^\s*[A-D](?:[.)]|\s{1,})\s*\S/gm) || []).length;
+          const questionSignal = /\?|\b(?:during|which|what|calculate|find|if the|the element|an organic compound|two springs|a shell|velocity)\b/i.test(x.text);
+          return { text: x.text, labels, questionSignal };
         })
-        .sort((a, b) => a.text.length - b.text.length);
+        .filter(x => x.labels >= 2 || x.questionSignal)
+        .sort((a, b) => b.labels - a.labels || a.text.length - b.text.length);
       const picked = [];
-      for (const item of nodes) {
+      for (const item of raw) {
         const text = item.text.replace(/\n{3,}/g, '\n\n');
-        if (!picked.some(p => p.text === text || p.text.includes(text) || text.includes(p.text))) {
-          picked.push({ text });
-        }
+        if (picked.some(p => p.text === text || p.text.includes(text))) continue;
+        // Avoid adding a larger wrapper when it only duplicates one already picked.
+        if (picked.some(p => text.includes(p.text) && p.labels >= item.labels && p.text.length < text.length)) continue;
+        picked.push({ text, labels: item.labels });
       }
-      return picked.slice(0, 12);
-    }).catch(() => []);
+      const cards = picked.filter(x => x.questionSignal || x.labels >= 2).slice(0, 12).map(x => x.text);
+      return { title: document.title, body, cards };
+    }).catch(() => ({ title: '', body: '', cards: [] }));
 
-    for (const card of cards) {
-      const text = clean(card.text);
+    const url = page.url();
+    if (/\/auth(?:\?|$)|login|sign-in/i.test(url) || /sign in to your account|login using otp/i.test(scan.body.slice(0, 500))) {
+      const state = 'login:' + url;
+      if (state !== lastState) {
+        console.log('\nLOGIN REQUIRED in the visible browser: ' + url);
+        console.log('Complete Google sign-in manually in that browser. The observer will keep watching this tab after sign-in.');
+        lastState = state;
+      }
+      await page.waitForTimeout(1200);
+      continue;
+    }
+
+    if (!scan.cards.length) {
+      const state = 'no-cards:' + url + ':' + scan.title;
+      if (state !== lastState) {
+        console.log('\nNo question card detected yet. Page: ' + scan.title + ' (' + url + ')');
+        console.log('Keep the ordinary practice question visible; the observer is scanning automatically.');
+        lastState = state;
+      }
+      await page.waitForTimeout(1200);
+      continue;
+    }
+
+    for (const rawText of scan.cards) {
+      const text = clean(rawText);
       if (text.length < 35) continue;
-      const hasQuestionSignal = /\?|\b(?:during|which|what|calculate|find|if the|the element|an organic compound|two springs|a shell)\b/i.test(text);
+      const hasQuestionSignal = /\?|\b(?:during|which|what|calculate|find|if the|the element|an organic compound|two springs|a shell|velocity)\b/i.test(text);
       if (!hasQuestionSignal) continue;
       const signature = text.toLowerCase().replace(/\s+/g, ' ');
       if (seen.has(signature)) continue;
@@ -82,6 +110,7 @@ try {
       console.log('CONFIDENCE: ' + (out.confidence ? Math.round(out.confidence * 100) + '%' : 'not rated'));
       console.log('Review the explanation and make any study choices yourself.');
       console.log('='.repeat(72));
+      lastState = 'questions';
     }
 
     await page.waitForTimeout(1200);

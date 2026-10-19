@@ -1,8 +1,8 @@
 # NEET Practice Solver
 
-A small, stateless NEET-style practice helper. It provides transparent, limited rule-based calculations and asks for more context when a question is not supported. No database or Supabase is used, and question history is not stored.
+A small, stateless NEET-style practice helper. It provides transparent rule-based calculations and selected NCERT-style answers, and asks for more context when a question is not supported. No database or Supabase is used, and question history is not stored.
 
-## Local setup
+## Local web app
 
 Requirements: Node.js 20 or later.
 
@@ -15,22 +15,36 @@ npm start
 
 Open `http://localhost:3000`. Health endpoint: `GET /health`. Solver endpoint: `POST /solve` with JSON such as `{"question":"Calculate motional emf for magnetic field B = 2 tesla, length L = 1 m, speed v = 8 m/s."}`.
 
+## Automatic TrackPrep question observer (local PC)
+
+The optional Playwright helper watches the visible TrackPrep ZAP tab, detects newly visible question text, and prints an answer/explanation when a verified rule matches.
+
+1. Install Playwright locally if needed: `npm install --no-save playwright`
+2. Install its browser once: `npx playwright install chromium`
+3. Run: `npm run trackprep:watch`
+4. In the visible browser it opens, complete TrackPrep Google sign-in yourself if prompted. The local browser profile is separate from TinyFish profiles, so a first local sign-in may be required.
+5. Keep the browser and terminal running while practicing. Stop with Ctrl+C.
+
+The observer polls visible page text; it does not click options, submit answers, alter scores, or bypass CAPTCHA/security challenges. It may need selector/extraction adjustments if TrackPrep changes its page layout. The rule-based solver covers only a small verified subset and returns `needs_context` for unsupported or ambiguous questions. Verify explanations against study material.
+
 ## Current supported reasoning
 
-- Motional emf using ε = B L v when the required values are explicitly stated.
-- Limited Ohm's law calculations when the requested unknown and two known values are explicit.
+- Motional emf using ε = B L v when required values are explicit.
+- Limited Ohm's law calculations when the unknown and two known values are explicit.
+- Beta-minus decay, seed germination/gibberellin, an isoelectronic ion-size comparison, equal-force spring energy, a projectile flight-time product, a Tollens-negative oxime example, and a basic velocity integral.
 - Hückel-rule explanation, but not a molecule-specific aromaticity verdict without molecular context.
 - Unsupported or ambiguous prompts return `needs_context`; the solver does not invent an answer.
 
-This is a transparent rule-based prototype, not a general AI model. Check results against trusted study material. Image questions, diagrams, broad factual recall and multi-step problems are not generally supported yet.
+This is a transparent rule-based prototype, not a general AI model. Image questions, diagrams, broad factual recall and many multi-step problems are not generally supported yet.
 
 ## Deploy to Render
 
-The included `render.yaml` defines a free Node web service. In Render, create a new Blueprint or Web Service connected to this repository, use branch `main`, build command `npm install`, start command `npm start`, and health path `/health`. Render free services may sleep after inactivity; health pings do not guarantee continuous uptime.
+The included `render.yaml` defines a free Node web service. The Render web app solves text sent to its `/solve` endpoint. The local TrackPrep observer runs on the user's PC and is **not** hosted on Render, because Render cannot access the local browser's Google OAuth session. Render free services may sleep after inactivity; a web service should not be treated as an always-on browser worker.
 
 ## Scope and privacy
 
-- No database, no Supabase, no accounts, no persistent question history.
-- The app only solves text submitted directly to this app.
-- It does not control a browser, submit answers to live competitions/exams, manipulate scores, or intentionally produce scheduled wrong answers/skips.
+- No database, no accounts, no persistent question history.
+- The local observer uses a persistent local Playwright browser profile in `.trackprep-profile/`, which is ignored by Git. Never upload that folder, browser cookies, OAuth tokens, passwords, or storage-state files.
+- Google authentication stays in the visible browser; never paste passwords or OTPs into the terminal or chat.
+- The app does not control a browser on the Render server, submit answers to live competitions/exams, or intentionally misrepresent study results.
 - A limited solver may be wrong; always verify the explanation.
