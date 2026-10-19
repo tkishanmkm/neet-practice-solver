@@ -121,7 +121,13 @@ try {
         })
         .sort((a, b) => b.optionCount - a.optionCount || a.text.length - b.text.length);
       const chosen = candidates.find(item => item.top < window.innerHeight && item.top + item.height > 0);
-      if (chosen) chosen.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (chosen) {
+        const signature = chosen.text.toLowerCase().replace(/\s+/g, ' ').trim();
+        if (window.__trackprepLastStudyScroll !== signature) {
+          chosen.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          window.__trackprepLastStudyScroll = signature;
+        }
+      }
       return { title: document.title, url: location.href, bodyText: cleanText(document.body?.innerText).slice(0, 700), question: chosen?.text || '' };
     }).catch(() => ({ title: '', url: page.url(), bodyText: '', question: '' }));
 
