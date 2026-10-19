@@ -11,7 +11,7 @@
     "start": "node server.js",
     "trackprep:watch": "node scripts/trackprep-assist.mjs",
     "test": "node --test",
-    "check": "node --check server.js && node --check solver.js && node --check public/app.js && node --check scripts/trackprep-assist.mjs"
+    "check": "node --check server.js && node --check solver.js && node --check research.js && node --check ai-solver.js && node --check public/app.js && node --check scripts/trackprep-assist.mjs"
   },
   "dependencies": {
     "express": "^5.1.0"

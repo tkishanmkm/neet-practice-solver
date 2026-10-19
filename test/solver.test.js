@@ -52,3 +52,21 @@ test('integrates v = At + Bt² over 1 to 2 seconds', () => {
   const out = solveQuestion('If the velocity of a particle is v = At + Bt², where A and B are constants, then the distance travelled by it between 1 s and 2 s is');
   assert.match(out.answer, /3A\/2 \+ 7B\/3/);
 });
+
+test('solves statements about photophosphorylation', () => {
+  const out = solveQuestion('Statement A: Photophosphorylation is the synthesis of ATP from ADP and inorganic phosphate in the absence of light. Statement B: ATP is synthesised by cells (in mitochondria and chloroplasts) is named photophosphorylation.');
+  assert.equal(out.status, 'success');
+  assert.match(out.answer, /^D/);
+});
+
+test('solves horizontal range for hole 8 cm above ground and 2 cm below surface', () => {
+  const out = solveQuestion('A cylindrical container containing water has a small hole at height of H = 8 cm from the bottom and at a depth of 2 cm from the top surface of the liquid. The maximum horizontal distance travelled by the water before it hits the ground (x) is');
+  assert.equal(out.status, 'success');
+  assert.match(out.answer, /^B/);
+});
+
+test('solves lowest pKb among ethylamines and aniline', () => {
+  const out = solveQuestion('Which among the following amines has lowest pKb values? CH3CH2NH2; (CH3CH2)2NH; (CH3CH2)3N; C6H5NH2');
+  assert.equal(out.status, 'success');
+  assert.match(out.answer, /^B/);
+});

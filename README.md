@@ -1,6 +1,6 @@
 # NEET Practice Solver
 
-A small, stateless NEET-style practice helper. It provides transparent rule-based calculations and selected NCERT-style answers, and asks for more context when a question is not supported. No database or Supabase is used, and question history is not stored.
+A stateless NEET-style practice helper. It provides transparent rule-based calculations and selected NCERT-style answers. Unknown questions can trigger a bounded public-web search fallback and return source leads plus a Google search link. No database or Supabase is used, and question history is not stored. Web results are not automatically treated as verified answers.
 
 ## Local web app
 
@@ -13,7 +13,7 @@ npm run check
 npm start
 ```
 
-Open `http://localhost:3000`. Health endpoint: `GET /health`. Solver endpoint: `POST /solve` with JSON such as `{"question":"Calculate motional emf for magnetic field B = 2 tesla, length L = 1 m, speed v = 8 m/s."}`.
+Open `http://localhost:3000`. Health endpoint: `GET /health`. Solver endpoint: `POST /solve` with JSON such as `{"question":"Calculate motional emf for magnetic field B = 2 tesla, length L = 1 m, speed v = 8 m/s."}`. When a rule does not match, `/solve` automatically tries the optional Gemini fallback if configured, then searches public web results; `/research` runs the search stage directly using `{"question":"full question text and choices"}`. Search is capped at six requests per minute per client per running instance. Search results are source leads only, and a Google search URL is included for manual fallback. Search availability and HTML parsing can vary by provider. For a stronger unknown-question fallback, optionally set `GEMINI_API_KEY` in Render's Environment settings (never commit the key); `GEMINI_MODEL` is optional and defaults to `gemini-3.8-flash`. The AI fallback is only attempted after local rules fail, is rate-limited, and returns a suggestion only when its self-reported confidence is at least 0.65. This is not a guarantee of correctness. Check the current Gemini API free-tier limits and data-use terms before enabling it.
 
 ## Automatic TrackPrep question observer (local PC)
 
