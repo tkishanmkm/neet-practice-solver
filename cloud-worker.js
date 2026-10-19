@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 const express = require('express');
 const { chromium } = require('playwright');
 const { solveQuestion } = require('./solver');
@@ -33,7 +33,9 @@ async function inspect() {
       const text = clean(document.body?.innerText).slice(0, 1200);
       return { title: document.title, url: location.href, loginRequired: /sign in|log in|login/i.test(document.title) || /sign in to your account|login using otp/i.test(text), question: candidates[0] || '' };
     });
-    browserState = { ...browserState, status: 'running', checkedAt: new Date().toISOString(), title: result.title, url: result.url, loginRequired: result.loginRequired, error: null };
+    browserState = { ...browserState, status: result.loginRequired ? 'login_required' : 'running', checkedAt: new Date().toISOString(), title: result.title, url: result.url, loginRequired: result.loginRequired, error: null };
+    // Do not solve or cache page text when the site has redirected to authentication.
+    if (result.loginRequired) return;
     if (result.question) {
       const sig = result.question.toLowerCase().replace(/\s+/g, ' ').trim();
       if (!seen.has(sig)) {
