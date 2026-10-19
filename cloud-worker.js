@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 const express = require('express');
 const { chromium } = require('playwright');
 const { solveQuestion } = require('./solver');
@@ -13,6 +13,9 @@ let browser;
 let page;
 let inspecting = false;
 const seen = new Set();
+function isLoginPage({ title = '', url = '', text = '' } = {}) {
+  return /\/(?:auth|login|signin)(?:[/?#]|$)/i.test(url) || /sign in|log in|login/i.test(title) || /sign in to your account|login using otp/i.test(text);
+}
 app.get('/health', (_req, res) => res.status(200).json({ status: 'ok', worker: 'cloud-browser-prototype', browser: browserState.status, checkedAt: browserState.checkedAt }));
 app.get('/worker/status', (_req, res) => res.json({ status: browserState.status, checkedAt: browserState.checkedAt, title: browserState.title, url: browserState.url, loginRequired: browserState.loginRequired, lastQuestionAt: browserState.lastQuestionAt, lastResult: browserState.lastResult ? { status: browserState.lastResult.status, confidence: browserState.lastResult.confidence } : null, error: browserState.error, targetUrl, note: 'Prototype only. No answer selection or submission. Free hosting may sleep and ephemeral storage does not preserve Google sign-in.' }));
 async function inspect() {
@@ -31,8 +34,9 @@ async function inspect() {
       const visible = el => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.display !== 'none' && s.visibility !== 'hidden'; };
       const candidates = Array.from(document.querySelectorAll('main,article,[role="article"],section')).filter(visible).map(el => clean(el.innerText || el.textContent)).filter(t => t.length >= 35 && t.length <= 3500 && /\?|\b(?:which|what|calculate|find|determine|correct|incorrect|velocity|force|energy|atom|molecule|plant|cell|equation|question)\b/i.test(t)).sort((a,b) => a.length-b.length);
       const text = clean(document.body?.innerText).slice(0, 1200);
-      return { title: document.title, url: location.href, loginRequired: /sign in|log in|login/i.test(document.title) || /sign in to your account|login using otp/i.test(text), question: candidates[0] || '' };
+      return { title: document.title, url: location.href, text, question: candidates[0] || '' };
     });
+    result.loginRequired = isLoginPage(result);
     browserState = { ...browserState, status: result.loginRequired ? 'login_required' : 'running', checkedAt: new Date().toISOString(), title: result.title, url: result.url, loginRequired: result.loginRequired, error: null };
     // Do not solve or cache page text when the site has redirected to authentication.
     if (result.loginRequired) return;
@@ -56,4 +60,7 @@ async function inspect() {
     inspecting = false;
   }
 }
-app.listen(port, '0.0.0.0', () => { console.log('Cloud browser prototype listening on', port); inspect(); const timer = setInterval(() => { if (!stopping) inspect(); }, pollMs); const stop = async () => { stopping = true; clearInterval(timer); if (browser) await browser.close().catch(() => {}); process.exit(0); }; process.on('SIGTERM', stop); process.on('SIGINT', stop); });
+if (require.main === module) {
+  app.listen(port, '0.0.0.0', () => { console.log('Cloud browser prototype listening on', port); inspect(); const timer = setInterval(() => { if (!stopping) inspect(); }, pollMs); const stop = async () => { stopping = true; clearInterval(timer); if (browser) await browser.close().catch(() => {}); process.exit(0); }; process.on('SIGTERM', stop); process.on('SIGINT', stop); });
+}
+module.exports = { isLoginPage };
