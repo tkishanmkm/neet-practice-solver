@@ -11,10 +11,13 @@ let browserState = { status: 'starting', checkedAt: null, title: null, url: null
 let stopping = false;
 let browser;
 let page;
+let inspecting = false;
 const seen = new Set();
 app.get('/health', (_req, res) => res.status(200).json({ status: 'ok', worker: 'cloud-browser-prototype', browser: browserState.status, checkedAt: browserState.checkedAt }));
 app.get('/worker/status', (_req, res) => res.json({ status: browserState.status, checkedAt: browserState.checkedAt, title: browserState.title, url: browserState.url, loginRequired: browserState.loginRequired, lastQuestionAt: browserState.lastQuestionAt, lastResult: browserState.lastResult ? { status: browserState.lastResult.status, confidence: browserState.lastResult.confidence } : null, error: browserState.error, targetUrl, note: 'Prototype only. No answer selection or submission. Free hosting may sleep and ephemeral storage does not preserve Google sign-in.' }));
 async function inspect() {
+  if (inspecting || stopping) return;
+  inspecting = true;
   try {
     if (!browser) {
       browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
@@ -47,6 +50,8 @@ async function inspect() {
     console.error('Cloud browser inspection failed:', browserState.error);
     if (browser) await browser.close().catch(() => {});
     browser = null; page = null;
+  } finally {
+    inspecting = false;
   }
 }
 app.listen(port, '0.0.0.0', () => { console.log('Cloud browser prototype listening on', port); inspect(); const timer = setInterval(() => { if (!stopping) inspect(); }, pollMs); const stop = async () => { stopping = true; clearInterval(timer); if (browser) await browser.close().catch(() => {}); process.exit(0); }; process.on('SIGTERM', stop); process.on('SIGINT', stop); });
