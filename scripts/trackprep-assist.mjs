@@ -5,6 +5,7 @@
 // Google OAuth is completed by the account owner in the visible browser.
 // This tool does not click answers, submit forms, or manipulate results.
 const { createRequire } = await import('node:module');
+const { fileURLToPath } = await import('node:url');
 const require = createRequire(import.meta.url);
 const { solveQuestion } = require('../solver.js');
 const readline = await import('node:readline/promises');
@@ -20,7 +21,7 @@ try {
   process.exit(1);
 }
 
-const profile = new URL('../.trackprep-profile/', import.meta.url).pathname;
+const profile = fileURLToPath(new URL('../.trackprep-profile/', import.meta.url));
 const context = await chromium.launchPersistentContext(profile, { headless: false });
 const page = context.pages()[0] || await context.newPage();
 try {
