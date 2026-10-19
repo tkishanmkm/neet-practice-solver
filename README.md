@@ -48,3 +48,7 @@ The included `render.yaml` defines a free Node web service. The Render web app s
 - Google authentication stays in the visible browser; never paste passwords or OTPs into the terminal or chat.
 - The app does not control a browser on the Render server, submit answers to live competitions/exams, or intentionally misrepresent study results.
 - A limited solver may be wrong; always verify the explanation.
+
+## Cloud browser worker prototype (feature branch only)
+
+A separate prototype entry point, `npm run cloud-browser:worker`, starts headless Playwright Chromium, checks the configured TrackPrep URL, and reports basic browser/question-observation status. It never selects or submits answers. The `/worker/status` endpoint intentionally exposes only metadata, not captured question text or answer suggestions. This is a capability test, not a completed unattended bot: Google OAuth login/session persistence is not implemented, and Render Free may sleep or restart without preserving browser state. Do not deploy this worker as a production service until browser installation, access control, authentication, session lifecycle, and free-tier memory usage are validated.
